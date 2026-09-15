@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>인생네컷</title>
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;font-family:Arial,"Noto Sans KR",sans-serif;
+    background:#f4f4f4;color:#111;min-height:100vh;
+  }
+  .app{max-width:1100px;margin:auto;min-height:100vh;background:white}
+  header{
+    height:76px;border-bottom:1px solid #ddd;display:flex;align-items:center;
+    justify-content:space-between;padding:0 28px;position:sticky;top:0;background:#fff;z-index:5
+  }
+  .logo{font-size:25px;font-weight:900;letter-spacing:-1.5px}
+  .step{font-size:13px;color:#777}
+  main{padding:30px}
+  .screen{display:none}.screen.active{display:block}
+  h1{font-size:34px;margin:0 0 8px;letter-spacing:-2px}
+  .sub{color:#777;margin:0 0 28px}
+  .frames{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .frame-card{
+    border:2px solid #e5e5e5;border-radius:14px;padding:16px;background:#fff;
+    cursor:pointer;transition:.2s;text-align:center
+  }
+  .frame-card:hover,.frame-card.selected{border-color:#111;transform:translateY(-2px)}
+  .preview{
+    height:290px;background:#eee;border-radius:8px;display:grid;grid-template-columns:1fr 1fr;
+    gap:4px;padding:6px;margin-bottom:13px
+  }
+  .preview span{background:#d7d7d7;border-radius:3px}
+  .frame-card:nth-child(2) .preview span{background:#eee}
+  .frame-card:nth-child(3) .preview span{background:#1f1f1f}
+  .frame-card:nth-child(4) .preview span{background:#f2e8dc}
+  .frame-name{font-weight:800}.frame-desc{font-size:12px;color:#888;margin-top:5px}
+  .camera-layout{display:grid;grid-template-columns:1.3fr .7fr;gap:24px}
+  .camera{
+    background:#111;border-radius:18px;padding:14px;color:white;position:relative;
+  }
+  video{width:100%;aspect-ratio:4/3;object-fit:cover;background:#222;border-radius:10px;display:block}
+  .countdown{
+    position:absolute;inset:14px;display:none;align-items:center;justify-content:center;
+    font-size:110px;font-weight:900;text-shadow:0 3px 20px #000;pointer-events:none
+  }
+  .camera-controls{display:flex;justify-content:center;gap:10px;padding-top:14px}
+  button{
+    border:0;border-radius:10px;padding:12px 18px;font-weight:800;cursor:pointer;
+    background:#111;color:#fff
+  }
+  button.secondary{background:#eee;color:#111}
+  .shots{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .shot{background:#eee;border-radius:9px;aspect-ratio:1/1.25;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:13px}
+  .shot img{width:100%;height:100%;object-fit:cover}
+  .hint{background:#f7f7f7;border-radius:12px;padding:15px;margin-top:15px;font-size:13px;color:#666;line-height:1.6}
+  .result-layout{display:grid;grid-template-columns:1fr 1fr;gap:35px;align-items:start}
+  .print-wrap{display:flex;justify-content:center;background:#eee;border-radius:16px;padding:24px}
+  .print{
+    width:250px;background:white;padding:12px 12px 20px;box-shadow:0 5px 20px #ccc;
+  }
+  .print-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+  .print-grid img{width:100%;aspect-ratio:1/1.25;object-fit:cover}
+  .print-title{text-align:center;font-size:12px;font-weight:900;margin-top:10px;letter-spacing:2px}
+  .options{border-top:1px solid #ddd;margin-top:20px;padding-top:20px}
+  .options label{display:block;margin:12px 0;font-size:14px}
+  input[type=color]{width:45px;height:32px;border:0;padding:0;vertical-align:middle}
+  footer{padding:20px 30px 35px;color:#aaa;font-size:12px;text-align:center}
+  @media(max-width:800px){
+    main{padding:20px}.frames{grid-template-columns:1fr 1fr}.camera-layout,.result-layout{grid-template-columns:1fr}
+  }
+  @media(max-width:480px){
+    header{padding:0 18px}.frames{gap:9px}.frame-card{padding:10px}.preview{height:210px}
+    h1{font-size:28px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="logo">인생네컷</div>
+  <div class="step" id="stepText">STEP 1 · 프레임 선택</div>
+</header>
+
+<main>
+<section id="screen1" class="screen active">
+  <h1>오늘의 네컷을 골라보세요.</h1>
+  <p class="sub">포토부스처럼 프레임을 선택하고 사진을 찍어보세요.</p>
+  <div class="frames">
+    <div class="frame-card selected" data-frame="black">
+      <div class="preview"><span></span><span></span><span></span><span></span></div>
+      <div class="frame-name">BLACK</div><div class="frame-desc">깔끔한 클래식</div>
+    </div>
+    <div class="frame-card" data-frame="white">
+      <div class="preview"><span></span><span></span><span></span><span></span></div>
+      <div class="frame-name">WHITE</div><div class="frame-desc">심플 & 미니멀</div>
+    </div>
+    <div class="frame-card" data-frame="dark">
+      <div class="preview"><span></span><span></span><span></span><span></span></div>
+      <div class="frame-name">DARK</div><div class="frame-desc">시크한 무드</div>
+    </div>
+    <div class="frame-card" data-frame="beige">
+      <div class="preview"><span></span><span></span><span></span><span></span></div>
+      <div class="frame-name">BEIGE</div><div class="frame-desc">따뜻한 감성</div>
+    </div>
+  </div>
+  <button id="startBtn" style="margin-top:28px;width:100%;height:52px">촬영 시작하기</button>
+</section>
+
+<section id="screen2" class="screen">
+  <h1>촬영해볼까요?</h1>
+  <p class="sub">카메라 권한을 허용한 뒤 촬영 버튼을 눌러주세요. 총 4장을 찍습니다.</p>
+  <div class="camera-layout">
+    <div>
+      <div class="camera">
+        <video id="video" autoplay playsinline></video>
+        <div class="countdown" id="countdown"></div>
+        <div class="camera-controls">
+          <button id="captureBtn">📸 촬영하기</button>
+          <button class="secondary" id="uploadBtn">사진 불러오기</button>
+          <input id="fileInput" type="file" accept="image/*" hidden>
+        </div>
+      </div>
+      <div class="hint">💡 실제 포토부스처럼 촬영 전 3초 카운트다운이 진행됩니다.</div>
+    </div>
+    <div>
+      <h3>촬영된 사진 <span id="shotCount">0</span>/4</h3>
+      <div class="shots" id="shots"></div>
+    </div>
+  </div>
+</section>
+
+<section id="screen3" class="screen">
+  <h1>사진이 완성됐어요.</h1>
+  <p class="sub">원하는 옵션을 적용하고 저장해보세요.</p>
+  <div class="result-layout">
+    <div class="print-wrap">
+      <div class="print" id="print">
+        <div class="print-grid" id="printGrid"></div>
+        <div class="print-title">인생네컷 · 2026</div>
+      </div>
+    </div>
+    <div>
+      <h3>프레임 설정</h3>
+      <div class="options">
+        <label>프레임 색상 <input type="color" id="frameColor" value="#111111"></label>
+        <label>사진 간격 <input type="range" id="gapRange" min="2" max="14" value="5"></label>
+      </div>
+      <button id="saveBtn" style="width:100%;margin-top:15px">완성본 저장하기</button>
+      <button class="secondary" id="againBtn" style="width:100%;margin-top:10px">다시 찍기</button>
+      <p style="font-size:12px;color:#999;line-height:1.6;margin-top:18px">
+        ※ 이 페이지는 브라우저에서 카메라를 사용하는 간단한 포토부스 예제입니다.
+      </p>
+    </div>
+  </div>
+</section>
+</main>
+<footer>PHOTO BOOTH · LIFE FOUR CUT</footer>
+</div>
+
+<script>
+let stream=null;
+let selectedFrame='black';
+let photos=[];
+
+const screens=[document.getElementById('screen1'),document.getElementById('screen2'),document.getElementById('screen3')];
+const stepText=document.getElementById('stepText');
+const video=document.getElementById('video');
+const countdown=document.getElementById('countdown');
+const shots=document.getElementById('shots');
+const shotCount=document.getElementById('shotCount');
+const canvas=document.createElement('canvas');
+
+document.querySelectorAll('.frame-card').forEach(card=>{
+  card.addEventListener('click',()=>{
+    document.querySelectorAll('.frame-card').forEach(x=>x.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedFrame=card.dataset.frame;
+    const colors={black:'#111111',white:'#ffffff',dark:'#222222',beige:'#ead9c5'};
+    document.getElementById('frameColor').value=colors[selectedFrame];
+  });
+});
+
+function showScreen(n){
+  screens.forEach((s,i)=>s.classList.toggle('active',i===n));
+  stepText.textContent=n===0?'STEP 1 · 프레임 선택':n===1?'STEP 2 · 촬영':'STEP 3 · 완성';
+}
+
+async function startCamera(){
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+    video.srcObject=stream;
+  }catch(e){
+    alert('카메라를 사용할 수 없습니다. 브라우저의 카메라 권한을 허용해주세요.');
+  }
+}
+
+document.getElementById('startBtn').onclick=()=>{
+  photos=[];renderShots();showScreen(1);startCamera();
+};
+
+function renderShots(){
+  shots.innerHTML='';
+  for(let i=0;i<4;i++){
+    const div=document.createElement('div');div.className='shot';
+    if(photos[i]){
+      const img=document.createElement('img');img.src=photos[i];div.appendChild(img);
+    }else div.textContent=`PHOTO ${i+1}`;
+    shots.appendChild(div);
+  }
+  shotCount.textContent=photos.length;
+}
+
+async function takePhoto(){
+  if(photos.length>=4)return;
+  countdown.style.display='flex';
+  for(let i=3;i>0;i--){
+    countdown.textContent=i;
+    await new Promise(r=>setTimeout(r,700));
+  }
+  countdown.style.display='none';
+
+  canvas.width=video.videoWidth||800;
+  canvas.height=video.videoHeight||600;
+  const ctx=canvas.getContext('2d');
+  ctx.translate(canvas.width,0);ctx.scale(-1,1);
+  ctx.drawImage(video,0,0,canvas.width,canvas.height);
+  photos.push(canvas.toDataURL('image/jpeg',.9));
+  renderShots();
+
+  if(photos.length===4){
+    setTimeout(()=>finish(),400);
+  }
+}
+document.getElementById('captureBtn').onclick=takePhoto;
+
+document.getElementById('uploadBtn').onclick=()=>document.getElementById('fileInput').click();
+document.getElementById('fileInput').onchange=e=>{
+  const file=e.target.files[0];if(!file||photos.length>=4)return;
+  const reader=new FileReader();
+  reader.onload=()=>{photos.push(reader.result);renderShots();if(photos.length===4)finish()};
+  reader.readAsDataURL(file);
+};
+
+function finish(){
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+  const grid=document.getElementById('printGrid');
+  grid.innerHTML='';
+  photos.forEach(src=>{
+    const img=document.createElement('img');img.src=src;grid.appendChild(img);
+  });
+  applyPrintStyle();showScreen(2);
+}
+
+function applyPrintStyle(){
+  const color=document.getElementById('frameColor').value;
+  document.getElementById('print').style.background=color;
+  document.getElementById('gapRange').addEventListener('input',()=>{
+    document.getElementById('printGrid').style.gap=document.getElementById('gapRange').value+'px';
+  },{once:true});
+  document.getElementById('printGrid').style.gap=document.getElementById('gapRange').value+'px';
+  document.getElementById('print').style.color=isLight(color)?'#111':'#fff';
+}
+function isLight(hex){
+  const n=parseInt(hex.slice(1),16),r=n>>16,g=(n>>8)&255,b=n&255;
+  return (r*299+g*587+b*114)>150000;
+}
+document.getElementById('frameColor').oninput=applyPrintStyle;
+document.getElementById('gapRange').oninput=()=>document.getElementById('printGrid').style.gap=document.getElementById('gapRange').value+'px';
+
+document.getElementById('saveBtn').onclick=()=>{
+  const print=document.getElementById('print');
+  const w=500,h=Math.round(print.offsetHeight*500/print.offsetWidth);
+  const c=document.createElement('canvas');c.width=w;c.height=h;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle=getComputedStyle(print).backgroundColor;ctx.fillRect(0,0,w,h);
+  const imgs=photos.map(src=>new Promise(resolve=>{const im=new Image();im.onload=()=>resolve(im);im.src=src;}));
+  Promise.all(imgs).then(list=>{
+    const pad=24,gap=10;
+    const cellW=(w-pad*2-gap)/2,cellH=cellW*1.25;
+    list.forEach((im,i)=>{
+      const x=pad+(i%2)*(cellW+gap),y=pad+Math.floor(i/2)*(cellH+gap);
+      ctx.drawImage(im,x,y,cellW,cellH);
+    });
+    ctx.fillStyle=isLight(document.getElementById('frameColor').value)?'#111':'#fff';
+    ctx.font='bold 20px Arial';ctx.textAlign='center';
+    ctx.fillText('인생네컷 · 2026',w/2,h-20);
+    const a=document.createElement('a');a.download='인생네컷.png';a.href=c.toDataURL('image/png');a.click();
+  });
+};
+
+document.getElementById('againBtn').onclick=()=>{
+  photos=[];renderShots();showScreen(0);
+};
+renderShots();
+</script>
+</body>
+</html>
